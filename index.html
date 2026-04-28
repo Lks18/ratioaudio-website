@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" type="image/png" href="favicon.png">
+<link rel="icon" type="image/png" href="favicon.png">
 <title>Ratio Audio — Sound Design & Post Production</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -365,6 +366,11 @@
   .masonry-grid {
     columns: 3;
     column-gap: 4px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .masonry-grid.loaded {
+    opacity: 1;
   }
   @media (max-width: 900px) { .masonry-grid { columns: 2; } }
   @media (max-width: 500px) { .masonry-grid { columns: 1; } }
@@ -882,7 +888,7 @@
     <li><a href="#projects">Projects</a></li>
     <li><a href="#fields">Fields</a></li>
     <li><a href="#about">About</a></li>
-    <li><a href="#instagram">Instagram</a></li>
+    <!-- <li><a href="#instagram">Instagram</a></li> -->
     <li><a href="#contact">Contact</a></li>
   </ul>
 </nav>
@@ -1277,17 +1283,19 @@
   </div>
 </section>
 
-<!-- ── Instagram Feed ── -->
+<!-- ── Instagram Feed (auskommentiert) ──
 <section id="instagram" style="background:var(--bg2);padding:6rem 3rem;">
   <div class="section-inner">
     <div class="section-label reveal">Follow Along</div>
     <h2 class="section-title reveal" style="margin-bottom:0.5rem;">Instagram</h2>
     <p class="reveal" style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.12em;color:var(--fg3);margin-bottom:3rem;"><a href="https://www.instagram.com/ratio.audio/" target="_blank" rel="noopener" style="color:var(--fg3);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--fg3)'">@ratio.audio</a></p>
-    <div class="reveal" id="behold-feed">
-      <script src="https://feeds.behold.so/Nm4Y78mSuvum6aqpEmtK"></script>
+    <div class="reveal">
+      <div id="Nm4Y78mSuvum6aqpEmtK"></div>
+      <script src="https://feeds.behold.so/Nm4Y78mSuvum6aqpEmtK" defer></script>
     </div>
   </div>
 </section>
+──>
 
 <!-- ── Contact ── -->
 <section id="contact">
@@ -1437,6 +1445,23 @@
     // Make carouselNext/Prev global for inline onclick buttons on other slides
     window.carouselNext = carouselNext;
     window.carouselPrev = carouselPrev;
+  }
+
+  // ── Masonry: wait for all images before showing grid
+  const masonryGrid = document.getElementById('masonryGrid');
+  if (masonryGrid) {
+    const masonryImgs = Array.from(masonryGrid.querySelectorAll('img'));
+    let loaded = 0;
+    const total = masonryImgs.length;
+    function checkLoaded() {
+      loaded++;
+      if (loaded >= total) masonryGrid.classList.add('loaded');
+    }
+    masonryImgs.forEach(img => {
+      if (img.complete) checkLoaded();
+      else { img.addEventListener('load', checkLoaded); img.addEventListener('error', checkLoaded); }
+    });
+    setTimeout(() => masonryGrid.classList.add('loaded'), 3000);
   }
 
   // ── Masonry Lightbox
