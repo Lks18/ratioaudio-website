@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="favicon.png">
+<title>Ratio Audio — Sound Design & Post Production</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bellota+Text:ital,wght@0,300;0,400;0,700;1,300;1,400;1,700&family=DM+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #080808;
+    --bg2: #0f0f0f;
+    --bg3: #161616;
+    --fg: #f0ede8;
+    --fg2: #a09a92;
+    --fg3: #504c47;
+    --accent: #c8b89a;
+    --accent2: #8a7a66;
+    --gold: #d4b483;
+    --red: #c94a3a;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.12);
+    --font-display: 'Bellota Text', Georgia, serif;
+    --font-body: 'Outfit', sans-serif;
+    --font-mono: 'DM Mono', monospace;
+    --nav-h: 72px;
+    --max: 1280px;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.6;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── Custom cursor ── */
+  #cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: width 0.2s var(--ease), height 0.2s var(--ease), background 0.2s;
+    mix-blend-mode: difference;
+  }
+  #cursor.hover { width: 40px; height: 40px; background: rgba(200,184,154,0.3); }
+
+  /* ── Noise overlay ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    height: var(--nav-h);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 3rem;
+    z-index: 500;
+    transition: background 0.4s, border-color 0.4s;
+    border-bottom: 1px solid transparent;
+  }
+  nav.scrolled {
+    background: rgba(8,8,8,0.92);
+    border-bottom-color: var(--border);
+    backdrop-filter: blur(20px);
+  }
+
+  .nav-logo {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--fg);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+  }
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links {
+    display: flex; gap: 2.5rem; list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: var(--fg2);
+    text-decoration: none;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content: '';
+    position: absolute; bottom: -4px; left: 0; right: 100%;
+    height: 1px; background: var(--gold);
+    transition: right 0.3s var(--ease);
+  }
+  .nav-links a:hover { color: var(--fg); }
+  .nav-links a:hover::after { right: 0; }
+
+  /* ── Hero ── */
+  #hero {
+    position: relative;
+    height: 100vh; min-height: 700px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url('images/DJI_0460-1-scaled.jpg');
+    background-size: cover; background-position: center;
+    transform: scale(1.05);
+    transition: transform 8s ease;
+    filter: brightness(0.25) saturate(0.6);
+  }
+  #hero:hover .hero-bg { transform: scale(1.08); }
+
+  .hero-vignette {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(8,8,8,0.7) 100%);
+  }
+
+  .hero-content {
+    position: relative; z-index: 2;
+    max-width: 1100px; padding: 0 2rem;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2.5rem;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease) 0.3s forwards;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 8vw, 7rem);
+    line-height: 0.95;
+    color: var(--fg);
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease) 0.5s forwards;
+  }
+  .hero-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .hero-sub {
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg2);
+    margin-bottom: 3.5rem;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease) 0.7s forwards;
+  }
+
+  .hero-cta {
+    display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease) 0.9s forwards;
+  }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 1.1rem 2.5rem;
+    border-radius: 2px;
+    transition: all 0.3s var(--ease);
+    display: inline-block;
+  }
+  .btn-primary {
+    background: var(--gold);
+    color: var(--bg);
+    border: 1px solid var(--gold);
+  }
+  .btn-primary:hover {
+    background: transparent;
+    color: var(--gold);
+    transform: translateY(-2px);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--fg2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover {
+    color: var(--fg);
+    border-color: var(--fg2);
+    transform: translateY(-2px);
+  }
+
+  .hero-scroll {
+    position: absolute; bottom: 2.5rem; left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+    display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    opacity: 0;
+    animation: fadeUp 1s var(--ease) 1.2s forwards;
+  }
+  .hero-scroll span {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg3);
+  }
+  .scroll-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--fg3), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  /* ── Social strip ── */
+  .hero-social {
+    position: absolute; bottom: 2.5rem; right: 3rem;
+    z-index: 2;
+    display: flex; flex-direction: column; gap: 1rem;
+    opacity: 0;
+    animation: fadeIn 1s ease 1.4s forwards;
+  }
+  .hero-social a {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fg3);
+    text-decoration: none;
+    writing-mode: vertical-rl;
+    transition: color 0.2s;
+  }
+  .hero-social a:hover { color: var(--gold); }
+
+  /* ── Section layout ── */
+  section { padding: 8rem 3rem; }
+
+  .section-inner {
+    max-width: var(--max);
+    margin: 0 auto;
+    overflow: hidden;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px; height: 1px;
+    background: var(--gold);
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.1;
+    color: var(--fg);
+    margin-bottom: 4rem;
+  }
+
+  /* ── Featured project ── */
+  #projects { background: var(--bg); }
+
+  .featured-project {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+    margin-bottom: 6rem;
+    padding-bottom: 6rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .featured-thumb {
+    position: relative;
+    overflow: hidden;
+    border-radius: 2px;
+    aspect-ratio: 16/9;
+  }
+  .featured-thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease);
+    display: block;
+  }
+  .featured-thumb:hover img { transform: scale(1.04); }
+  .featured-thumb .play-btn {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .featured-thumb:hover .play-btn { opacity: 1; }
+  .play-btn svg { width: 56px; height: 56px; }
+
+  .featured-info { }
+  .featured-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.75rem;
+  }
+  .featured-title {
+    font-family: var(--font-display);
+    font-size: 2.5rem;
+    line-height: 1.1;
+    color: var(--fg);
+    margin-bottom: 1rem;
+  }
+  .featured-desc {
+    font-size: 0.95rem;
+    color: var(--fg2);
+    line-height: 1.75;
+    margin-bottom: 2rem;
+  }
+
+  /* ── Project grid — Masonry + Lightbox ── */
+  .projects-heading {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg3);
+    margin-bottom: 1.5rem;
+  }
+
+  .masonry-grid {
+    columns: 3;
+    column-gap: 4px;
+  }
+  @media (max-width: 900px) { .masonry-grid { columns: 2; } }
+  @media (max-width: 500px) { .masonry-grid { columns: 1; } }
+
+  .m-card {
+    break-inside: avoid;
+    margin-bottom: 4px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: block;
+  }
+  .m-card img {
+    width: 100%; display: block;
+    filter: saturate(0.65) brightness(0.82);
+    transition: transform 0.5s var(--ease), filter 0.4s;
+  }
+  .m-card:hover img {
+    transform: scale(1.04);
+    filter: saturate(1) brightness(0.65);
+  }
+  .m-card-label {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    padding: 1.25rem 1rem 0.9rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.82) 0%, transparent 100%);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .m-card:hover .m-card-label { opacity: 1; transform: translateY(0); }
+  .m-card-title {
+    font-family: var(--font-body);
+    font-size: 0.85rem; font-weight: 500;
+    color: var(--fg);
+  }
+  .m-card-tag {
+    font-family: var(--font-mono);
+    font-size: 0.6rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--gold);
+    margin-top: 0.15rem;
+  }
+  .m-card-expand {
+    position: absolute; top: 10px; right: 10px;
+    width: 30px; height: 30px;
+    border: 1px solid rgba(255,255,255,0.4); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .m-card:hover .m-card-expand { opacity: 1; }
+  .m-card-expand svg { width: 13px; height: 13px; stroke: white; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+
+  /* ── Lightbox modal ── */
+  .lb-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(0,0,0,0.93);
+    align-items: center; justify-content: center;
+  }
+  .lb-overlay.open { display: flex; }
+  .lb-modal {
+    background: #0f0f0f;
+    border: 1px solid rgba(255,255,255,0.1);
+    width: min(680px, 92vw);
+    position: relative;
+    overflow: hidden;
+  }
+  .lb-modal-img { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; }
+  .lb-modal-body { padding: 1.1rem 1.4rem 1.4rem; }
+  .lb-modal-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--gold);
+    margin-bottom: 0.3rem;
+  }
+  .lb-modal-title {
+    font-family: var(--font-display);
+    font-size: 1.6rem; color: var(--fg);
+    margin-bottom: 1rem;
+  }
+  .lb-modal-footer {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .lb-watch {
+    font-family: var(--font-mono);
+    font-size: 0.68rem; letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.25rem;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: transparent; color: var(--fg2);
+    cursor: pointer; transition: all 0.2s;
+    text-decoration: none; display: inline-block;
+  }
+  .lb-watch:hover { color: var(--gold); border-color: var(--gold); }
+  .lb-nav { display: flex; gap: 6px; align-items: center; }
+  .lb-counter {
+    font-family: var(--font-mono);
+    font-size: 0.65rem; letter-spacing: 0.1em;
+    color: var(--fg3); margin-right: 8px;
+  }
+  .lb-counter span { color: var(--fg2); }
+  .lb-nav-btn {
+    width: 34px; height: 34px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--fg2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .lb-nav-btn:hover { color: var(--gold); border-color: var(--gold); }
+  .lb-nav-btn svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; stroke-linecap: round; }
+  .lb-close {
+    position: absolute; top: 10px; right: 10px;
+    width: 32px; height: 32px;
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--fg2); font-size: 18px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: color 0.2s;
+  }
+  .lb-close:hover { color: var(--fg); }
+
+  /* ── Fields ── */
+  #fields { background: var(--bg2); }
+
+  .fields-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+
+  .field-item {
+    position: relative;
+    padding: 3.5rem 2.5rem;
+    overflow: hidden;
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+  .field-bg {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    filter: brightness(0.18) saturate(0.4);
+    transition: filter 0.5s var(--ease), transform 0.6s var(--ease);
+  }
+  .field-item:hover .field-bg {
+    filter: brightness(0.32) saturate(0.6);
+    transform: scale(1.04);
+  }
+  .field-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 100%;
+    height: 2px; background: var(--gold);
+    transition: right 0.5s var(--ease);
+    z-index: 2;
+  }
+  .field-item:hover::before { right: 0; }
+  .field-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(8,8,8,0.85) 40%, rgba(8,8,8,0.2) 100%);
+    z-index: 1;
+  }
+  .field-content {
+    position: relative;
+    z-index: 2;
+  }
+  .field-icon {
+    margin-bottom: 1.5rem;
+    opacity: 0.7;
+    transition: opacity 0.3s;
+  }
+  .field-item:hover .field-icon { opacity: 1; }
+  .field-name {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    color: var(--fg);
+    margin-bottom: 0.75rem;
+    line-height: 1.2;
+  }
+  .field-desc {
+    font-size: 0.875rem;
+    color: var(--fg2);
+    line-height: 1.7;
+  }
+
+  /* ── Carousel ── */
+  #carousel-section { background: var(--bg); padding: 0; }
+
+  .carousel-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+  }
+  .carousel-track {
+    display: flex;
+    transition: transform 0.7s var(--ease);
+  }
+  .carousel-slide {
+    min-width: 100%;
+    position: relative;
+    aspect-ratio: 16/7;
+    overflow: hidden;
+  }
+  .carousel-slide img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(0.45) saturate(0.7);
+    transition: filter 0.5s;
+  }
+  .carousel-slide.active img { filter: brightness(0.55) saturate(0.8); }
+  .carousel-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 4rem 5rem 3.5rem;
+    background: linear-gradient(to top, rgba(8,8,8,0.9) 0%, transparent 100%);
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+  .carousel-meta { }
+  .carousel-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 0.5rem;
+  }
+  .carousel-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    color: var(--fg);
+    line-height: 1.1;
+    margin-bottom: 0.75rem;
+  }
+  .carousel-desc {
+    font-size: 0.9rem;
+    color: var(--fg2);
+    max-width: 560px;
+    line-height: 1.7;
+  }
+  .carousel-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1.5rem;
+    flex-shrink: 0;
+  }
+  .carousel-nav {
+    display: flex;
+    gap: 0.75rem;
+  }
+  .carousel-btn {
+    width: 48px; height: 48px;
+    border: 1px solid var(--border2);
+    background: rgba(8,8,8,0.6);
+    color: var(--fg);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+    border-radius: 2px;
+    backdrop-filter: blur(8px);
+  }
+  .carousel-btn:hover {
+    background: var(--gold);
+    border-color: var(--gold);
+    color: var(--bg);
+  }
+  .carousel-btn svg { width: 18px; height: 18px; }
+  .carousel-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .carousel-dot {
+    width: 20px; height: 2px;
+    background: var(--fg3);
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    padding: 0;
+  }
+  .carousel-dot.active {
+    width: 36px;
+    background: var(--gold);
+  }
+  .carousel-counter {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    color: var(--fg3);
+  }
+  .carousel-counter span { color: var(--fg2); }
+
+  /* ── About ── */
+  #about { background: var(--bg); }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 5rem;
+    align-items: start;
+  }
+  .about-img-wrap {
+    width: 320px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .about-img-wrap img {
+    width: 100%;
+    height: auto;
+    display: block;
+    filter: saturate(0.6) brightness(0.9);
+  }
+  .about-img-wrap::after {
+    content: '';
+    position: absolute;
+    top: 1.5rem; left: 1.5rem; right: -1.5rem; bottom: -1.5rem;
+    border: 1px solid var(--border2);
+    z-index: -1;
+  }
+  .about-text {
+    min-width: 0;
+    flex: 1;
+  }
+  .about-body {
+    font-size: 1rem;
+    color: var(--fg2);
+    line-height: 1.85;
+    margin-bottom: 1.5rem;
+  }
+  .about-quote {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-style: italic;
+    color: var(--accent);
+    border-left: 2px solid var(--gold);
+    padding-left: 1.5rem;
+    margin: 2.5rem 0;
+    line-height: 1.4;
+  }
+
+  /* ── Contact ── */
+  #contact { background: var(--bg2); }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+  }
+  .contact-left { }
+  .contact-intro {
+    font-size: 1.05rem;
+    color: var(--fg2);
+    line-height: 1.8;
+    margin-bottom: 3rem;
+    max-width: 480px;
+  }
+  .contact-links {
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+  .contact-link {
+    display: flex; align-items: center; gap: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg2);
+    text-decoration: none;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .contact-link:hover { color: var(--gold); border-color: var(--gold); }
+  .contact-link-icon {
+    width: 16px; height: 16px;
+    opacity: 0.5;
+  }
+
+  .contact-form { }
+  .form-field {
+    margin-bottom: 1.5rem;
+  }
+  .form-field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fg3);
+    margin-bottom: 0.5rem;
+  }
+  .form-field input,
+  .form-field textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 0.9rem;
+    padding: 0.85rem 1rem;
+    border-radius: 2px;
+    transition: border-color 0.2s;
+    outline: none;
+    resize: vertical;
+  }
+  .form-field input:focus,
+  .form-field textarea:focus { border-color: var(--accent2); }
+  .form-field textarea { min-height: 120px; }
+
+  .btn-submit {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--gold);
+    color: var(--bg);
+    border: none;
+    padding: 0.9rem 2.5rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.3s var(--ease);
+    width: 100%;
+  }
+  .btn-submit:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  /* ── Footer ── */
+  footer {
+    padding: 3rem;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-logo {
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--fg2);
+  }
+  .footer-copy {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    color: var(--fg3);
+  }
+  .footer-links {
+    display: flex; gap: 1.5rem; list-style: none;
+  }
+  .footer-links a {
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--fg3);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--gold); }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  @keyframes scrollPulse {
+    0%,100% { opacity: 0.3; transform: scaleY(1); }
+    50%      { opacity: 1;   transform: scaleY(0.6); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    nav { padding: 0 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 5rem 1.5rem; }
+    .featured-project { grid-template-columns: 1fr; gap: 2rem; }
+    .fields-grid { grid-template-columns: 1fr; }
+    .about-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .about-img-wrap { width: 100%; max-width: 320px; }
+    .contact-grid { grid-template-columns: 1fr; gap: 3rem; }
+    footer { padding: 2rem 1.5rem; flex-direction: column; align-items: flex-start; }
+    .hero-social { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+
+<!-- ── Navigation ── -->
+<nav id="navbar">
+  <a class="nav-logo" href="#"><img src="logo.png" alt="Ratio Audio" style="height:32px;width:auto;display:block;"></a>
+  <ul class="nav-links">
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#fields">Fields</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#instagram">Instagram</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-vignette"></div>
+
+  <div class="hero-content">
+    <p class="hero-eyebrow">Sound Design &amp; Post Production</p>
+    <img src="logo.png" alt="Ratio Audio" class="hero-logo" style="width:min(680px,88vw);height:auto;margin-bottom:2.5rem;opacity:0;animation:fadeUp 1s var(--ease) 0.5s forwards;">
+    <p class="hero-sub">Mix &amp; Master &nbsp;·&nbsp; Commercial Sound &nbsp;·&nbsp; Post Production</p>
+    <div class="hero-cta">
+      <a href="#projects" class="btn btn-primary">View Projects</a>
+      <a href="#contact" class="btn btn-ghost">Get in Touch</a>
+    </div>
+  </div>
+
+  <div class="hero-social">
+    <a href="https://www.instagram.com/ratio.audio/" target="_blank" rel="noopener">Instagram</a>
+    <a href="https://www.youtube.com/@ratioaudio" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://soundcloud.com/ratioaudio" target="_blank" rel="noopener">SoundCloud</a>
+    <a href="https://www.linkedin.com/in/lukas-fritsch-ratio/" target="_blank" rel="noopener">LinkedIn</a>
+  </div>
+
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    <span>Scroll</span>
+  </div>
+</section>
+
+<!-- ── Projects ── -->
+<section id="projects">
+  <div class="section-inner">
+    <div class="section-label">Selected Work</div>
+    <h2 class="section-title reveal">High End<br><em style="font-style:italic;color:var(--accent)">Audio Solutions</em></h2>
+
+    <!-- Featured -->
+    <div class="featured-project reveal">
+      <a class="featured-thumb" href="https://www.youtube.com/watch?v=nUha963Sp2U" target="_blank" rel="noopener">
+        <img src="images/Introducing Amflow PX - All-Terrain Full‑Power Electric Mountain Bike.png" alt="Commercial Sound Design & Mix" loading="lazy">
+        <div class="play-btn">
+          <svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="28" cy="28" r="27" stroke="white" stroke-opacity="0.8" stroke-width="1"/>
+            <path d="M22 20L38 28L22 36V20Z" fill="white"/>
+          </svg>
+        </div>
+      </a>
+      <div class="featured-info">
+        <div class="featured-tag">Featured Project · 2026</div>
+        <h3 class="featured-title">Commercial Sound Design &amp; Mix</h3>
+        <p class="featured-desc">Sound Design & Mix for the Amflow PX Campaign.</p>
+        <a href="https://www.youtube.com/watch?v=nUha963Sp2U" target="_blank" rel="noopener" class="btn btn-ghost">Watch on YouTube</a>
+      </div>
+    </div>
+
+    <!-- Carousel -->
+    <section id="carousel-section" style="margin: 0 -3rem 5rem; padding: 0;">
+      <div class="carousel-wrap" id="carousel">
+        <div class="carousel-track" id="carouselTrack">
+
+          <div class="carousel-slide active">
+            <img src="images/143-2L1A3172-scaled-1920x1080.jpg" alt="MMONKS">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Mix &amp; Master</div>
+                <div class="carousel-title">MMonks</div>
+                <div class="carousel-desc">Mixing and mastering of a live recording for the Broadway Tribute Band MMONKS.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span id="curSlide">1</span> / <span id="totalSlides">9</span></div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" id="prevBtn" aria-label="Previous">
+                    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg>
+                  </button>
+                  <button class="carousel-btn" id="nextBtn" aria-label="Next">
+                    <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg>
+                  </button>
+                </div>
+                <div class="carousel-dots" id="carouselDots"></div>
+                <a href="https://www.youtube.com/watch?v=FgszcLsP0pE" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/Porsche-Clubhouse.jpg" alt="Porsche Clubhouse">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Porsche Clubhouse</div>
+                <div class="carousel-desc">Bespoke sound design for a Porsche brand film — precision audio crafted to match the brand's iconic identity.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span id="curSlide">2</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://youtu.be/gLWlb0H4B7Y" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/Limelight-Screen.png" alt="Limelight">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Limelight</div>
+                <div class="carousel-desc">Sound Design for a Limelight Spot.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>3</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://www.youtube.com/watch?v=7CEy_rRtraw" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/kartbahn-screenshot2-2-1430x804.png" alt="Kartbahn Rheine">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design &amp; Mix</div>
+                <div class="carousel-title">Kartbahn Rheine</div>
+                <div class="carousel-desc">Cinema advertisement — sound-designed and mixed in 5.1 surround and stereo for theatrical release.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>4</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://www.youtube.com/watch?v=L6DT1Rjlp7o" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/tissot prx.png" alt="Tissot PRX">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Tissot PRX</div>
+                <div class="carousel-desc">Full Sound Design for an animation about Tissot PRX.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>5</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://player.vimeo.com/video/1101626259?h=6aef6feb17&title=0&byline=0&portrait=0" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/Porsche-Macan-Pic-1-edited-1422x799.png" alt="Porsche Macan">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Porsche Macan</div>
+                <div class="carousel-desc">Sound design for the Porsche Macan launch — refined, dynamic and unmistakably on-brand.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>6</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://youtu.be/tY-bE74nUzA" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/huntcover.jpg" alt="Hunt Showdown">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Hunt Showdown</div>
+                <div class="carousel-desc">Atmospheric Sound Design for a Hunt Showdown Trailer — immersive, tense and built for the hunt.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>7</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://www.youtube.com/watch?v=YNB3nygvF84" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/RedBull-F1-Cover-1432x806.png" alt="Red Bull Cinematic">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Red Bull Cinematic</div>
+                <div class="carousel-desc">Full Sound Design for a Red Bull F1 cinematic — raw speed translated into an immersive soundscape.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>8</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://www.youtube.com/watch?v=LF7Osw08rfE" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+          <div class="carousel-slide">
+            <img src="images/toyota-land-cruiser-thumbnail-edited-1920x1080.png" alt="Toyota LandCruiser">
+            <div class="carousel-info">
+              <div class="carousel-meta">
+                <div class="carousel-tag">Sound Design</div>
+                <div class="carousel-title">Toyota LandCruiser</div>
+                <div class="carousel-desc">Sound Design for a Toyota's LandCruiser spot.</div>
+              </div>
+              <div class="carousel-actions">
+                <div class="carousel-counter"><span>9</span> / 9</div>
+                <div class="carousel-nav">
+                  <button class="carousel-btn" onclick="carouselPrev()" aria-label="Previous"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M11 4L6 9l5 5"/></svg></button>
+                  <button class="carousel-btn" onclick="carouselNext()" aria-label="Next"><svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M7 4l5 5-5 5"/></svg></button>
+                </div>
+                <a href="https://www.youtube.com/watch?v=6zdzyNXjdmw" target="_blank" rel="noopener" class="btn btn-ghost" style="font-size:0.62rem;padding:0.6rem 1.25rem">Watch Project</a>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- More Projects — Masonry + Lightbox -->
+    <p class="projects-heading reveal">More Projects</p>
+    <div class="masonry-grid reveal" id="masonryGrid">
+      <div class="m-card" data-index="0"><img src="images/Porsche-Clubhouse.jpg" alt="Porsche Clubhouse" loading="lazy"><div class="m-card-label"><div class="m-card-title">Porsche Clubhouse</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="1"><img src="images/Limelight-Screen.png" alt="Limelight" loading="lazy"><div class="m-card-label"><div class="m-card-title">Limelight</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="2"><img src="images/Formula-E-Pic-1.png" alt="Formula-E" loading="lazy"><div class="m-card-label"><div class="m-card-title">Formula-E</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="3"><img src="images/P1095130-Verbessert-RR-scaled-1920x1080.jpg" alt="MMonks" loading="lazy"><div class="m-card-label"><div class="m-card-title">MMonks</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="4"><img src="images/Porsche-Macan-Pic-1-edited-1422x799.png" alt="Porsche Macan" loading="lazy"><div class="m-card-label"><div class="m-card-title">Porsche Macan</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="5"><img src="images/huntcover.jpg" alt="Hunt Showdown" loading="lazy"><div class="m-card-label"><div class="m-card-title">Hunt Showdown</div><div class="m-card-tag">Sound Design &amp; Mix</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="6"><img src="images/RedBull-F1-Cover-1432x806.png" alt="Red Bull Cinematic" loading="lazy"><div class="m-card-label"><div class="m-card-title">Red Bull Cinematic</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="7"><img src="images/toyota-land-cruiser-thumbnail-edited-1920x1080.png" alt="Toyota LandCruiser" loading="lazy"><div class="m-card-label"><div class="m-card-title">Toyota LandCruiser</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="8"><img src="images/google-design-1-1024x576.png" alt="Google" loading="lazy"><div class="m-card-label"><div class="m-card-title">Google</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="9"><img src="images/kartbahn-screenshot2-2-1024x576.png" alt="Kartbahn Rheine" loading="lazy"><div class="m-card-label"><div class="m-card-title">Kartbahn Rheine</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="10"><img src="images/sepp-herber-awards-01.png" alt="Sepp Herberger Awards" loading="lazy"><div class="m-card-label"><div class="m-card-title">Sepp Herberger Awards</div><div class="m-card-tag">Post Production</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="11"><img src="images/pocahontas-1lkegh32ttqxi1pa-1024x576.jpg" alt="Pocahontas" loading="lazy"><div class="m-card-label"><div class="m-card-title">Colors of the Wind</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="12"><img src="images/Adidas-Ad-Thumbnail-1024x576.png" alt="Adidas" loading="lazy"><div class="m-card-label"><div class="m-card-title">Adidas</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="13"><img src="images/Avon-Ashmaere-Complexion.png" alt="Avon — Ashmaere" loading="lazy"><div class="m-card-label"><div class="m-card-title">Avon — Ashmaere</div><div class="m-card-tag">Commercial Sound</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="14"><img src="images/simplehshapes-1-1024x576.png" alt="Simple Shapes" loading="lazy"><div class="m-card-label"><div class="m-card-title">Simple Shapes</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="15"><img src="images/rlk-interview2-1-1024x576.png" alt="RLK Interview" loading="lazy"><div class="m-card-label"><div class="m-card-title">Interview - Randy Lee Kay</div><div class="m-card-tag">Edit &amp; Post Production</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="16"><img src="images/Farben-EP.jpeg" alt="Farben EP" loading="lazy"><div class="m-card-label"><div class="m-card-title">Farben EP</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="17"><img src="images/mirror-1-1024x446.png" alt="Mirror" loading="lazy"><div class="m-card-label"><div class="m-card-title">Mirror</div><div class="m-card-tag">Score</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="18"><img src="images/Gate-11-Plane-1.png" alt="Gate 11" loading="lazy"><div class="m-card-label"><div class="m-card-title">Gate 11</div><div class="m-card-tag">Sound Design, Score, Mix</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="19"><img src="images/wp2084787-1024x576.jpg" alt="Cinematic Reel" loading="lazy"><div class="m-card-label"><div class="m-card-title">Friends Like Me</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="20"><img src="images/if-you-dont-mind.jpg" alt="If You Don't Mind" loading="lazy"><div class="m-card-label"><div class="m-card-title">If You Don't Mind</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="21"><img src="images/tissot prx.png" alt="Tissot PRX" loading="lazy"><div class="m-card-label"><div class="m-card-title">Tissot PRX</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="22"><img src="images/exact-band-logo-2.png" alt="Exact Band" loading="lazy"><div class="m-card-label"><div class="m-card-title">Exact Band</div><div class="m-card-tag">Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="23"><img src="images/photo_2020-05-06_11-07-44.jpg" alt="Roman Fritsch" loading="lazy"><div class="m-card-label"><div class="m-card-title">Roman Fritsch</div><div class="m-card-tag">Edit, Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="24"><img src="images/neonnote-2-edited.png" alt="Neonnote" loading="lazy"><div class="m-card-label"><div class="m-card-title">Neonnote</div><div class="m-card-tag">Score</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <!-- <div class="m-card" data-index="25"><img src="images/Limelight-Screen-1024x576.png" alt="Limelight" loading="lazy"><div class="m-card-label"><div class="m-card-title">Limelight</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div> -->
+      <div class="m-card" data-index="26"><img src="images/Screenshot-2023-02-28-142915-1024x577.png" alt="Cinematic Short" loading="lazy"><div class="m-card-label"><div class="m-card-title">Cinematic Short</div><div class="m-card-tag">Sound Design</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="27"><img src="images/Black-Saturday-Screen-1024x1024.png" alt="Black Saturday" loading="lazy"><div class="m-card-label"><div class="m-card-title">Black Saturday Trailer Remix</div><div class="m-card-tag">Productiton Mix &amp; Master</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="28"><img src="images/oak-collection-814x1024.png" alt="Oak Collection" loading="lazy"><div class="m-card-label"><div class="m-card-title">Oak Collection</div><div class="m-card-tag">Commercial Sound</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+      <div class="m-card" data-index="29"><img src="images/Sunglasses2-1-1024x1024.png" alt="Sunglasses" loading="lazy"><div class="m-card-label"><div class="m-card-title">Sunglasses</div><div class="m-card-tag">Commercial Sound</div></div><div class="m-card-expand"><svg viewBox="0 0 13 13"><path d="M1 8V1h7M1 1l10 10M12 4v8H4"/></svg></div></div>
+    </div>
+
+    <!-- Lightbox modal -->
+    <div class="lb-overlay" id="lbOverlay">
+      <div class="lb-modal">
+        <img class="lb-modal-img" id="lbImg" src="" alt="">
+        <button class="lb-close" id="lbClose">×</button>
+        <div class="lb-modal-body">
+          <div class="lb-modal-tag" id="lbTag"></div>
+          <div class="lb-modal-title" id="lbTitle"></div>
+          <div class="lb-modal-footer">
+            <a id="lbLink" href="#" target="_blank" rel="noopener"><span class="lb-watch">Watch Project →</span></a>
+            <div class="lb-nav">
+              <span class="lb-counter"><span id="lbCur">1</span> / <span id="lbTotal">30</span></span>
+              <button class="lb-nav-btn" id="lbPrev"><svg viewBox="0 0 14 14"><path d="M9 2L4 7l5 5"/></svg></button>
+              <button class="lb-nav-btn" id="lbNext"><svg viewBox="0 0 14 14"><path d="M5 2l5 5-5 5"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Fields ── -->
+<section id="fields">
+  <div class="section-inner">
+    <div class="section-label reveal">Expertise</div>
+    <h2 class="section-title reveal">Fields of Work</h2>
+    <div class="fields-grid">
+
+      <div class="field-item reveal">
+        <div class="field-bg" style="background-image:url('field-sounddesign.png')"></div>
+        <div class="field-overlay"></div>
+        <div class="field-content">
+          <div class="field-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="var(--gold)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 28 Q7 14 10 20 Q13 26 16 18 Q19 10 22 22 Q25 34 28 16 Q31 8 34 20 Q36 27 38 24"/>
+              <circle cx="20" cy="36" r="1.5" fill="var(--gold)" stroke="none"/>
+              <line x1="20" y1="28" x2="20" y2="34.5"/>
+            </svg>
+          </div>
+          <div class="field-name">Sound Design</div>
+          <p class="field-desc">From cinematic atmospheres to commercial spots — crafting sonic identities that move audiences and elevate narratives with precision and creativity.</p>
+        </div>
+      </div>
+
+      <div class="field-item reveal" style="transition-delay:0.1s">
+        <div class="field-bg" style="background-image:url('field-mixmaster.png')"></div>
+        <div class="field-overlay"></div>
+        <div class="field-content">
+          <div class="field-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="var(--gold)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="8" y1="10" x2="8" y2="30"/>
+              <line x1="16" y1="6" x2="16" y2="34"/>
+              <line x1="24" y1="12" x2="24" y2="28"/>
+              <line x1="32" y1="8" x2="32" y2="32"/>
+              <line x1="5" y1="20" x2="11" y2="20"/>
+              <line x1="13" y1="16" x2="19" y2="16"/>
+              <line x1="21" y1="22" x2="27" y2="22"/>
+              <line x1="29" y1="14" x2="35" y2="14"/>
+              <circle cx="8"  cy="20" r="2.5" fill="var(--bg2)"/>
+              <circle cx="16" cy="16" r="2.5" fill="var(--bg2)"/>
+              <circle cx="24" cy="22" r="2.5" fill="var(--bg2)"/>
+              <circle cx="32" cy="14" r="2.5" fill="var(--bg2)"/>
+            </svg>
+          </div>
+          <div class="field-name">Mix &amp; Master</div>
+          <p class="field-desc">Stereo and surround mixing with a focus on translation — delivering mixes that sound exceptional across every playback environment and format.</p>
+        </div>
+      </div>
+
+      <div class="field-item reveal" style="transition-delay:0.2s">
+        <div class="field-bg" style="background-image:url('field-scoring.png')"></div>
+        <div class="field-overlay"></div>
+        <div class="field-content">
+          <div class="field-icon">
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="var(--gold)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="6" y1="32" x2="6" y2="14"/>
+              <line x1="6" y1="14" x2="14" y2="10"/>
+              <line x1="14" y1="10" x2="14" y2="28"/>
+              <circle cx="6"  cy="32" r="3" fill="rgba(212,180,131,0.2)"/>
+              <circle cx="14" cy="28" r="3" fill="rgba(212,180,131,0.2)"/>
+              <line x1="22" y1="34" x2="22" y2="18"/>
+              <line x1="22" y1="18" x2="30" y2="12"/>
+              <line x1="30" y1="12" x2="30" y2="30"/>
+              <circle cx="22" cy="34" r="3" fill="rgba(212,180,131,0.2)"/>
+              <circle cx="30" cy="30" r="3" fill="rgba(212,180,131,0.2)"/>
+              <line x1="14" y1="18" x2="22" y2="18" stroke-dasharray="2 2"/>
+            </svg>
+          </div>
+          <div class="field-name">Scoring</div>
+          <p class="field-desc">Suitable soundtracks for your stories to deliver emotions and increase overall immersion.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── About ── -->
+<section id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-img-wrap reveal">
+        <img src="images/Group-105.png" alt="Ratio Audio" loading="lazy">
+      </div>
+      <div class="about-text reveal" style="transition-delay:0.15s">
+        <div class="section-label">About</div>
+        <h2 class="section-title" style="margin-bottom:1.5rem">Ratio Audio</h2>
+        <p class="about-body"> At Ratio Audio, we deliver premium audio solutions with a perfect balance of creativity and precision. Based in Germany, working internationally for agencies, directors, and brands who demand the best from their audio.</p>
+        <blockquote class="about-quote">Experience the difference that expert craftsmanship can make for your project.</blockquote>
+        <p class="about-body">Whether it's a cinematic trailer, a luxury brand spot, or a music release — every project receives the same meticulous attention to detail and sonic excellence.</p>
+        <a href="#contact" class="btn btn-primary" style="margin-top:1rem">Work Together</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Instagram Feed ── -->
+<section id="instagram" style="background:var(--bg2);padding:6rem 3rem;">
+  <div class="section-inner">
+    <div class="section-label reveal">Follow Along</div>
+    <h2 class="section-title reveal" style="margin-bottom:0.5rem;">Instagram</h2>
+    <p class="reveal" style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.12em;color:var(--fg3);margin-bottom:3rem;"><a href="https://www.instagram.com/ratio.audio/" target="_blank" rel="noopener" style="color:var(--fg3);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--gold)'" onmouseout="this.style.color='var(--fg3)'">@ratio.audio</a></p>
+    <div class="reveal" id="behold-feed">
+      <script src="https://feeds.behold.so/Nm4Y78mSuvum6aqpEmtK"></script>
+    </div>
+  </div>
+</section>
+
+<!-- ── Contact ── -->
+<section id="contact">
+  <div class="section-inner">
+    <div class="section-label reveal">Let's Work Together</div>
+    <h2 class="section-title reveal">Get in Touch</h2>
+    <div class="contact-grid">
+      <div class="reveal">
+        <p class="contact-intro">Let's connect and discover how premium audio can elevate your project. I work with directors, agencies, and brands worldwide.</p>
+        <div class="contact-links">
+          <a class="contact-link" href="mailto:l.fritsch97@googlemail.com">
+            <svg class="contact-link-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="14" height="10" rx="1.5"/><path d="M1 5l7 5 7-5"/></svg>
+            l.fritsch97@googlemail.com
+          </a>
+          <a class="contact-link" href="https://www.instagram.com/ratio.audio/" target="_blank" rel="noopener">
+            <svg class="contact-link-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="2" y="2" width="12" height="12" rx="3"/><circle cx="8" cy="8" r="3"/><circle cx="11.5" cy="4.5" r="0.5" fill="currentColor" stroke="none"/></svg>
+            Instagram
+          </a>
+          <a class="contact-link" href="https://www.linkedin.com/in/lukas-fritsch-ratio/" target="_blank" rel="noopener">
+            <svg class="contact-link-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 5.5h2V13h-2zm1-3a1 1 0 110 2 1 1 0 010-2zM5.5 7.5C5.5 6.4 6.4 5.5 7.5 5.5h1.5c1.7 0 3 1.3 3 3V13h-2V8.5c0-.6-.4-1-1-1s-1 .4-1 1V13h-2V7.5z"/></svg>
+            LinkedIn
+          </a>
+          <a class="contact-link" href="https://soundcloud.com/ratioaudio" target="_blank" rel="noopener">
+            <svg class="contact-link-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 9.5c0 1.7 1.3 3 3 3h7.5c1.4 0 2.5-1.1 2.5-2.5 0-1.2-.8-2.2-2-2.4V7c0-2.2-1.8-4-4-4-1.8 0-3.3 1.2-3.8 2.8C2.3 6.1 1 7.7 1 9.5z"/></svg>
+            SoundCloud
+          </a>
+          <a class="contact-link" href="https://www.youtube.com/@ratioaudio" target="_blank" rel="noopener">
+            <svg class="contact-link-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M6.5 6l4 2-4 2V6z" fill="currentColor" stroke="none"/></svg>
+            YouTube
+          </a>
+        </div>
+      </div>
+      <div class="reveal" style="transition-delay:0.15s">
+        <div class="contact-form">
+          <div class="form-field">
+            <label for="f-name">Name</label>
+            <input type="text" id="f-name" placeholder="Your name">
+          </div>
+          <div class="form-field">
+            <label for="f-email">Email</label>
+            <input type="email" id="f-email" placeholder="your@email.com">
+          </div>
+          <div class="form-field">
+            <label for="f-msg">Message</label>
+            <textarea id="f-msg" placeholder="Tell me about your project..."></textarea>
+          </div>
+          <button class="btn-submit" onclick="handleSubmit()">Send Message</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <img src="logo.png" alt="Ratio Audio" style="height:24px;width:auto;opacity:0.5;">
+  <ul class="footer-links">
+    <li><a href="https://ratioaudio.de/?page_id=496" target="_blank" rel="noopener">Impressum</a></li>
+    <li><a href="#hero">Back to Top</a></li>
+  </ul>
+  <span class="footer-copy">© Ratio Audio. All rights reserved.</span>
+</footer>
+
+<script>
+  // ── Custom cursor
+  const cur = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cur.style.left = e.clientX + 'px';
+    cur.style.top  = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .project-card, .field-item').forEach(el => {
+    el.addEventListener('mouseenter', () => cur.classList.add('hover'));
+    el.addEventListener('mouseleave', () => cur.classList.remove('hover'));
+  });
+
+  // ── Navbar scroll
+  const nav = document.getElementById('navbar');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 40);
+  });
+
+  // ── Scroll reveal
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        observer.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // ── Carousel
+  const track = document.getElementById('carouselTrack');
+  const slides = track ? Array.from(track.querySelectorAll('.carousel-slide')) : [];
+  const dotsContainer = document.getElementById('carouselDots');
+  let current = 0;
+  const total = slides.length;
+
+  if (total > 0) {
+    // Build dots
+    slides.forEach((_, i) => {
+      const d = document.createElement('button');
+      d.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+      d.setAttribute('aria-label', 'Slide ' + (i+1));
+      d.onclick = () => goTo(i);
+      dotsContainer.appendChild(d);
+    });
+
+    function goTo(n) {
+      slides[current].classList.remove('active');
+      current = (n + total) % total;
+      slides[current].classList.add('active');
+      track.style.transform = 'translateX(-' + (current * 100) + '%)';
+      dotsContainer.querySelectorAll('.carousel-dot').forEach((d, i) => {
+        d.classList.toggle('active', i === current);
+      });
+      const counter = document.getElementById('curSlide');
+      if (counter) counter.textContent = current + 1;
+    }
+
+    function carouselNext() { goTo(current + 1); }
+    function carouselPrev() { goTo(current - 1); }
+
+    document.getElementById('prevBtn').onclick = carouselPrev;
+    document.getElementById('nextBtn').onclick = carouselNext;
+
+    // Keyboard navigation
+    document.addEventListener('keydown', e => {
+      if (e.key === 'ArrowLeft')  carouselPrev();
+      if (e.key === 'ArrowRight') carouselNext();
+    });
+
+    // Touch / swipe
+    let touchStartX = 0;
+    track.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    track.addEventListener('touchend',   e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(dx) > 50) dx < 0 ? carouselNext() : carouselPrev();
+    });
+
+    // Auto-advance every 5s
+    let autoTimer = setInterval(carouselNext, 5000);
+    track.addEventListener('mouseenter', () => clearInterval(autoTimer));
+    track.addEventListener('mouseleave', () => { autoTimer = setInterval(carouselNext, 5000); });
+
+    // Make carouselNext/Prev global for inline onclick buttons on other slides
+    window.carouselNext = carouselNext;
+    window.carouselPrev = carouselPrev;
+  }
+
+  // ── Masonry Lightbox
+  const lbProjects = [
+    { img: 'images/Porsche-Clubhouse.jpg', title: 'Porsche Clubhouse', tag: 'Sound Design', url: 'https://youtu.be/gLWlb0H4B7Y' },
+    { img: 'images/Limelight-Screen.png', title: 'Limelight', tag: 'Mix & Master', url: 'https://www.youtube.com/watch?v=7CEy_rRtraw' },
+    { img: 'images/Formula-E-Pic-1.png', title: 'Formula-E', tag: 'Sound Design', url: 'https://youtu.be/MFvrckDl9bI' },
+    { img: 'images/P1095130-Verbessert-RR-scaled-1920x1080.jpg', title: 'MMonks', tag: 'Mix & Master', url: 'https://www.youtube.com/watch?v=Mlcko9t0Ocw' },
+    { img: 'images/Porsche-Macan-Pic-1-edited-1422x799.png', title: 'Porsche Macan', tag: 'Commercial Sound', url: 'https://youtu.be/tY-bE74nUzA' },
+    { img: 'images/huntcover.jpg', title: 'Hunt Showdown', tag: 'Game Audio', url: 'https://www.youtube.com/watch?v=YNB3nygvF84' },
+    { img: 'images/RedBull-F1-Cover-1432x806.png', title: 'Red Bull Cinematic', tag: 'Post Production', url: 'https://www.youtube.com/watch?v=LF7Osw08rfE' },
+    { img: 'images/toyota-land-cruiser-thumbnail-edited-1920x1080.png', title: 'Toyota LandCruiser', tag: 'Commercial Sound', url: 'https://www.youtube.com/watch?v=6zdzyNXjdmw' },
+    { img: 'images/google-design-1-1024x576.png', title: 'Google', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=bVtC5q1i7TE' },
+    { img: 'images/kartbahn-screenshot2-2-1024x576.png', title: 'Kartbahn Rheine', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=L6DT1Rjlp7o' },
+    { img: 'images/sepp-herber-awards-01.png', title: 'Sepp Herberger Awards', tag: 'Post Production', url: 'https://youtube.com/playlist?list=PLAoHcm3QwLOjg4MUROtIFFbJcEhJHzept' },
+    { img: 'images/pocahontas-1lkegh32ttqxi1pa-1024x576.jpg', title: 'Pocahontas', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=LPxv5hQlng0' },
+    { img: 'images/Adidas-Ad-Thumbnail-1024x576.png', title: 'Adidas', tag: 'Commercial Sound', url: 'https://www.youtube.com/watch?v=yVhY3srBYBs' },
+    { img: 'images/Avon-Ashmaere-Complexion.png', title: 'Avon — Ashmaere', tag: 'Commercial Sound', url: 'https://www.instagram.com/p/C0U3sd2PYXF/' },
+    { img: 'images/simplehshapes-1-1024x576.png', title: 'Simple Shapes', tag: 'Sound Design', url: 'https://www.instagram.com/p/Cz811xQtPmt/' },
+    { img: 'images/rlk-interview2-1-1024x576.png', title: 'RLK Interview', tag: 'Post Production', url: 'https://www.youtube.com/watch?v=DoeaxjDNjyk' },
+    { img: 'images/Farben-EP.jpeg', title: 'Farben EP', tag: 'Mix & Master', url: 'https://open.spotify.com/intl-de/album/5uelXYU9vjyyIKKMfEjP2F' },
+    { img: 'images/mirror-1-1024x446.png', title: 'Mirror', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=p-JSIN_GNyk' },
+    { img: 'images/Gate-11-Plane-1.png', title: 'Gate 11', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=lUBRS8dIF1E' },
+    { img: 'images/wp2084787-1024x576.jpg', title: 'Cinematic Reel', tag: 'Post Production', url: 'https://www.youtube.com/watch?v=fibdFfLXIyY' },
+    { img: 'images/if-you-dont-mind.jpg', title: 'If You Don\'t Mind', tag: 'Mix & Master', url: 'https://radiofunkloch.h-da.de/2021/07/15/if-you-dont-mind/' },
+    { img: 'images/KAI8921-1024x682.jpg', title: 'Tissot PRX', tag: 'Sound Design', url: 'https://player.vimeo.com/video/1101626259?h=6aef6feb17&title=0&byline=0&portrait=0' },
+    { img: 'images/exact-band-logo-2.png', title: 'Exact Band', tag: 'Mix & Master', url: 'https://www.youtube.com/watch?v=IJY50u68g9g' },
+    { img: 'images/photo_2020-05-06_11-07-44.jpg', title: 'Roman Fritsch', tag: 'Post Production', url: 'https://www.youtube.com/@RomanFritsch' },
+    { img: 'images/neonnote-2-edited.png', title: 'Neonnote', tag: 'Game Audio', url: 'https://profporenta.itch.io/neonnote' },
+    { img: 'images/Limelight-Screen-1024x576.png', title: 'Limelight', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=7CEy_rRtraw' },
+    { img: 'images/Screenshot-2023-02-28-142915-1024x577.png', title: 'Cinematic Short', tag: 'Sound Design', url: 'https://www.youtube.com/watch?v=H1Q2UnCl47k' },
+    { img: 'images/Black-Saturday-Screen-1024x1024.png', title: 'Black Saturday', tag: 'Mix & Master', url: 'https://www.youtube.com/watch?v=tlcXxfoeYbg' },
+    { img: 'images/oak-collection-814x1024.png', title: 'Oak Collection', tag: 'Commercial Sound', url: 'https://www.instagram.com/p/C0rKRL8NzgE/' },
+    { img: 'images/Sunglasses2-1-1024x1024.png', title: 'Sunglasses', tag: 'Commercial Sound', url: 'https://www.instagram.com/p/CyQ7xB5MMOE/' },
+  ];
+
+  let lbCurrent = 0;
+  document.getElementById('lbTotal').textContent = lbProjects.length;
+
+  function lbOpen(i) {
+    lbCurrent = i;
+    const p = lbProjects[i];
+    document.getElementById('lbImg').src = p.img;
+    document.getElementById('lbImg').alt = p.title;
+    document.getElementById('lbTag').textContent = p.tag;
+    document.getElementById('lbTitle').textContent = p.title;
+    document.getElementById('lbLink').href = p.url;
+    document.getElementById('lbCur').textContent = i + 1;
+    document.getElementById('lbOverlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function lbClose() {
+    document.getElementById('lbOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  document.querySelectorAll('.m-card').forEach(card => {
+    card.addEventListener('click', () => lbOpen(parseInt(card.dataset.index)));
+  });
+
+  document.getElementById('lbClose').addEventListener('click', lbClose);
+  document.getElementById('lbOverlay').addEventListener('click', e => { if (e.target === document.getElementById('lbOverlay')) lbClose(); });
+  document.getElementById('lbPrev').addEventListener('click', () => lbOpen((lbCurrent - 1 + lbProjects.length) % lbProjects.length));
+  document.getElementById('lbNext').addEventListener('click', () => lbOpen((lbCurrent + 1) % lbProjects.length));
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lbOverlay').classList.contains('open')) return;
+    if (e.key === 'Escape') lbClose();
+    if (e.key === 'ArrowLeft') lbOpen((lbCurrent - 1 + lbProjects.length) % lbProjects.length);
+    if (e.key === 'ArrowRight') lbOpen((lbCurrent + 1) % lbProjects.length);
+  });
+
+
+  function handleSubmit() {
+    const name    = document.getElementById('f-name').value.trim();
+    const email   = document.getElementById('f-email').value.trim();
+    const message = document.getElementById('f-msg').value.trim();
+    if (!name || !email || !message) {
+      alert('Please fill in all fields.');
+      return;
+    }
+    const subject = encodeURIComponent('Ratio Audio — Project Inquiry from ' + name);
+    const body    = encodeURIComponent('Hi,\n\n' + message + '\n\nBest,\n' + name + '\n' + email);
+    window.location.href = 'mailto:l.fritsch97@googlemail.com?subject=' + subject + '&body=' + body;
+  }
+</script>
+</body>
+</html>
